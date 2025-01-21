@@ -1,10 +1,12 @@
-import PropTypes from 'prop-types';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { nanoid } from "nanoid";
 import * as Yup from 'yup';
-import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
 import { BsPhone, BsPerson, BsPersonAdd } from 'react-icons/bs';
 import s from './ContactForm.module.css';
+import { useDispatch } from "react-redux";
+import { addContact } from "../../redux/contactsSlice";
+
 
 const initialValues = {
   id: '',
@@ -18,27 +20,22 @@ const validationSchema = Yup.object().shape({
     .max(50, 'Too Long!')
     .required('Required'),
   number: Yup.string()
-    .matches(/^\d{3}-\d{2}-\d{2}$/, 'Invalid phone number format')
+    .min(3, "Too short!")
+    .max(50, "Too long!")
     .required('Required'),
 });
 
-const ContactForm = ({ contacts, onSubmit }) => {
-  const handleSubmit = (values, { resetForm }) => {
-    if (
-      contacts.some(
-        contact => contact.name.toLowerCase() === values.name.toLowerCase()
-      )
-    ) {
-      iziToast.warning({
-        position: 'topRight',
-        message: `${values.name} is already in contacts`,
-      });
-      resetForm();
-      return;
-    }
-
-    onSubmit(values);
-    resetForm();
+const ContactForm = () => {
+  const dispatch = useDispatch();
+  const handleSubmit = (values, actions) => {
+    actions.resetForm();
+    dispatch(
+      addContact({
+        id: nanoid(),
+        name: values.name,
+        number: values.number,
+      })
+    );
   };
 
   return (
@@ -91,11 +88,6 @@ const ContactForm = ({ contacts, onSubmit }) => {
       </Form>
     </Formik>
   );
-};
-
-ContactForm.propTypes = {
-  onSubmit: PropTypes.func.isRequired,
-  contacts: PropTypes.array.isRequired,
 };
 
 export default ContactForm;
